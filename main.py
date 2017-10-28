@@ -10,36 +10,25 @@ GPIO.cleanup()
 
 sensor = dht11.DHT11(pin=4)
 
-def getTemperature():
-    while 1:
-        result = instance.read()
-        if result.temperature > 0:
-            return result.temperature
-        else:
-            print result
-
-def getHumidity():
-    while 1:
-        result = instance.read()
-        if result.humidity > 0:
-            return result.humidity
-
-client = InfluxDBClient(database='dbname')
+client = InfluxDBClient(database='sensors')
 
 while 1:
     result = sensor.read()
-    while 1:
-        
-    json_body = [
-        {
-            "measurement": "temperature",
-            "fields": {
-                "Float_value": 0.64,
-                "Int_value": 3,
-                "String_value": "Text",
-                "Bool_value": True
+    if result.error_code == 0:
+        temperature = result.temperature
+        humidity = result.humidity + 40
+        json_body = [
+            {
+                "measurement": "temperature",
+                "fields": {
+                    "Float_value": temperature
+                }
+            },
+            {
+                "measurement": "humidity",
+                "fields": {
+                    "Float_value": humidity
+                }
             }
-        }
-    ]
-
-print getHumidity()
+        ]
+        client.write_points(json_body)
